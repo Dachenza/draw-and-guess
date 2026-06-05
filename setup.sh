@@ -1,6 +1,4 @@
 #!/usr/bin/env bash
-set -e
-
 cd "$(dirname "$0")"
 
 RED='\033[0;31m'
@@ -57,12 +55,22 @@ else
 fi
 
 if [ -n "$NODE_NEED_UPGRADE" ]; then
-    echo "[INFO] Installing Node.js 22 LTS..."
+    # Check glibc version for Node.js compatibility
+    GLIBC_VER=$(ldd --version 2>&1 | head -1 | grep -oE '[0-9]+\.[0-9]+' | head -1)
+    GLIBC_MAJOR=$(echo "$GLIBC_VER" | cut -d. -f1)
+    GLIBC_MINOR=$(echo "$GLIBC_VER" | cut -d. -f2)
+    if [ "$GLIBC_MAJOR" -gt 2 ] || { [ "$GLIBC_MAJOR" = 2 ] && [ "$GLIBC_MINOR" -ge 28 ]; }; then
+        NODE_MAJOR="22"
+    else
+        echo -e "${YELLOW}[INFO] glibc $GLIBC_VER detected, using Node.js 18.x (compatible)${NC}"
+        NODE_MAJOR="18"
+    fi
+    echo "[INFO] Installing Node.js ${NODE_MAJOR}.x LTS..."
     if [ "$PKG" = "apt" ]; then
-        curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+        curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
         $INSTALL nodejs
     elif [ "$PKG" = "yum" ] || [ "$PKG" = "dnf" ]; then
-        curl -fsSL https://rpm.nodesource.com/setup_22.x | bash -
+        curl -fsSL "https://rpm.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
         $INSTALL nodejs
     elif [ "$PKG" = "pacman" ]; then
         $INSTALL nodejs npm
