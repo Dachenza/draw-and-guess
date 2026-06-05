@@ -45,6 +45,15 @@ fi
 
 echo ""
 echo "========================================"
-echo "  Starting Draw & Guess..."
+echo "  Starting Draw & Guess (background)..."
 echo "========================================"
-npm run dev
+LOGFILE="$(pwd)/server.log"
+nohup npm run dev > "$LOGFILE" 2>&1 &
+echo $! > "$(pwd)/.pid"
+echo "Logs: $LOGFILE"
+echo "PID: $(cat "$(pwd)/.pid")"
+echo ""
+echo "Server: http://localhost:8081"
+echo "Client: http://localhost:5173"
+echo ""
+echo "Use ./stop.sh to stop."
